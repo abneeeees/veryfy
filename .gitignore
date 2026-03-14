@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Bun / Node output
+dist/
+out/
+coverage/
+*.lcov
+*.tgz
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs and caches
+logs/
+*.log
+.cache/
+.eslintcache
+
+# Expo / React Native
+.expo/
+web-build/
+.metro-health-check*
+expo-env.d.ts
+
+# Generated native folders
+expo-app/android/
+expo-app/ios/
+
+# IDE / OS files
+.DS_Store
+.idea/
+.vscode/
+
+# Local test artifacts
+attendees.csv
+attendee-qr.png
