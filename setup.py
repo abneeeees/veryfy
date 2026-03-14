@@ -83,8 +83,6 @@ def check_prerequisites():
     ok("bun")
     require("psql")
     ok("psql")
-    require("mailhog")
-    ok("mailhog")
 
 
 def collect_config():
@@ -92,15 +90,33 @@ def collect_config():
     dim("Press enter to accept the default shown in brackets\n")
 
     cfg = {}
+
+    mode = ask("Environment (development/production)", "development").lower()
+    cfg["node_env"] = "production" if mode.startswith("p") else "development"
+    is_prod = cfg["node_env"] == "production"
+
     cfg["db_host"] = ask("PostgreSQL host", "localhost")
     cfg["db_port"] = ask("PostgreSQL port", "5432")
     cfg["db_name"] = ask("Database name", "eventdb")
     cfg["db_user"] = ask("Database user", "eventuser")
     cfg["db_password"] = ask("Database password", "eventpass")
     cfg["hmac_secret"] = ask_secret("HMAC secret key")
-    cfg["smtp_host"] = ask("SMTP host (MailHog)", "localhost")
-    cfg["smtp_port"] = ask("SMTP port (MailHog)", "1025")
-    cfg["smtp_from"] = ask("From address", "noreply@event.local")
+
+    if is_prod:
+        heading("SMTP — production (Spacemail)")
+        cfg["smtp_host"] = ask("SMTP host", "mail.spacemail.com")
+        cfg["smtp_port"] = ask("SMTP port", "465")
+        cfg["smtp_from"] = ask("SMTP from", "")
+        cfg["smtp_user"] = ask("SMTP user (email address)", "")
+        cfg["smtp_pass"] = ask("SMTP password", "")
+    else:
+        heading("SMTP — development (MailHog)")
+        cfg["smtp_host"] = ask("SMTP host", "localhost")
+        cfg["smtp_port"] = ask("SMTP port", "1025")
+        cfg["smtp_from"] = ask("SMTP from", "noreply@event.local")
+        cfg["smtp_user"] = ""
+        cfg["smtp_pass"] = ""
+
     cfg["backend_port"] = ask("Backend port", "3000")
 
     return cfg
@@ -182,11 +198,14 @@ def write_env(cfg):
     )
 
     env_file.write_text(
+        f"NODE_ENV={cfg['node_env']}\n"
         f"DATABASE_URL={db_url}\n"
         f"HMAC_SECRET={cfg['hmac_secret']}\n"
         f"SMTP_HOST={cfg['smtp_host']}\n"
         f"SMTP_PORT={cfg['smtp_port']}\n"
         f"SMTP_FROM={cfg['smtp_from']}\n"
+        f"SMTP_USER={cfg['smtp_user']}\n"
+        f"SMTP_PASS={cfg['smtp_pass']}\n"
         f"PORT={cfg['backend_port']}\n"
     )
 
@@ -258,6 +277,12 @@ def main():
 
     check_prerequisites()
     cfg = collect_config()
+
+    # Only require mailhog in development
+    if cfg["node_env"] == "development":
+        require("mailhog")
+        ok("mailhog")
+
     setup_postgres(cfg)
     load_schema(cfg)
     write_env(cfg)
