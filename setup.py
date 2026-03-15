@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 
 BOLD = "\033[1m"
+YELLOW = "\033[33m"
 GREEN = "\033[32m"
 RED = "\033[31m"
 CYAN = "\033[36m"
@@ -232,38 +233,47 @@ def install_deps(name, directory):
 
 def print_next_steps(cfg):
     p = cfg["backend_port"]
+    is_dev = cfg["node_env"] == "development"
     heading("All done — next steps")
 
-    print(f"""
-  1. Start MailHog (separate terminal):
-       {BOLD}MailHog{RESET}
+    step = 1
+    if is_dev:
+        print(f"""
+  {step}. Start MailHog (separate terminal):
+       {BOLD}mailhog{RESET}""")
+        step += 1
 
-  2. Start the backend (separate terminal):
+    print(f"""
+  {step}. Start the backend (separate terminal):
        {BOLD}cd backend && bun run dev{RESET}
 
-  3. Create an event:
+  {step+1}. Create an event:
        {BOLD}curl -X POST http://localhost:{p}/events \\
          -H "Content-Type: application/json" \\
-         -d '{{"name":"Your Event Name","date":"2026-04-30"}}'{RESET}
+         -d '{{"name":"{YELLOW}Your Event Name{RESET}{BOLD}","date":"{YELLOW}2026-03-15{RESET}{BOLD}"}}'{RESET}
 
-   4. Place your attendees CSV in the repo root as {BOLD}attendees.csv{RESET}
-        Expected columns:
-            {DIM}name, email, university, profile_link{RESET}
+  {step+2}. Place your attendees CSV in the repo root as {BOLD}attendees.csv{RESET}
+       Expected columns:
+           {DIM}name, email, university, profile_link{RESET}
 
-  5. Import attendees (use the UUID returned above as EVENT_ID):
+  {step+3}. Import attendees (use the UUID returned above as EVENT_ID):
        {BOLD}curl -X POST http://localhost:{p}/attendees/import \\
-         -F "eventId=EVENT_ID" \\
-         -F "csv=@attendees.csv"{RESET}
+         -F "eventId={YELLOW}EVENT_ID{RESET}{BOLD}" \\
+         -F "csv=@attendees.csv"{RESET}\n""")
 
-  6. View emails in MailHog:
-       {BOLD}http://localhost:8025{RESET}
+    if is_dev:
+        print(f"""  {step+4}. View emails in MailHog:
+       {BOLD}http://localhost:8025{RESET}\n""")
+        offset = 5
+    else:
+        offset = 4
 
-  7. Get your LAN IP for the Expo app:
+    print(f"""  {step+offset}. Get your LAN IP for the Expo app:
        {BOLD}ip a{RESET}
      Then set in expo-app/constants/config.ts:
-       {BOLD}export const BASE_URL = "http://<your-ip>:{p}";{RESET}
+       {BOLD}export const BASE_URL = "http://{YELLOW}<your-ip>{RESET}{BOLD}:{p}";{RESET}
 
-  8. Start the Expo app:
+  {step+offset+1}. Start the Expo app:
        {BOLD}cd expo-app && npx expo start{RESET}
 """)
 
