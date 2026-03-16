@@ -35,7 +35,7 @@ const transporter = nodemailer.createTransport(
 );
 
 export async function sendQREmail(to: string, name: string, qrBase64: string): Promise<void> {
-  const qrDataUrl = `data:image/png;base64,${qrBase64}`;
+  const cid = "qrcode@veryfy";
 
   await transporter.sendMail({
     from: smtpFrom,
@@ -48,7 +48,7 @@ export async function sendQREmail(to: string, name: string, qrBase64: string): P
         <p style="margin: 0 0 16px;">Show this QR code at check-in.</p>
 
         <img
-          src="${qrDataUrl}"
+          src="cid:${cid}"
           alt="QR code"
           style="display: block; max-width: 280px; width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 20px;"
         />
@@ -85,5 +85,12 @@ export async function sendQREmail(to: string, name: string, qrBase64: string): P
         </p>
       </div>
     `,
+    attachments: [
+      {
+        filename: "qrcode.png",
+        content: Buffer.from(qrBase64, "base64"),
+        cid,
+      },
+    ],
   });
 }
